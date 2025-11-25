@@ -31,13 +31,39 @@
 				<section id="main" class="container">
 					<header>
 						<h2>Your Results</h2>
-						<p>blah</p>
 					</header>
 					<div class="box">
-                        <!-- Image source: https://unsplash.com/photos/woman-in-black-long-sleeve-shirt-holding-white-paper-pqzRfBhd9r0 -->
-						<span class="image featured"><img src="images/planning.jpg" alt="" /></span>
-						<h3>Under Construction</h3>
-						<p>Check back later.</p>
+                        <!-- Image source: https://unsplash.com/photos/view-of-floating-open-book-from-stacked-books-in-library-HH4WBGNyltc -->
+						<span class="image featured"><img src="images/book.jpg" alt="" /></span>
+
+						<script>function generateResults()
+						{
+							var disciplines = ['Contract', 'Criminal', 'Property', 'Succession', 'Family', 'Taxation', 'Administrative', 'Migration', 'Media and Telecommunications', 'Privacy', 'Human Rights', 'International', 'Trade', 'Construction', 'Employment', 'Trusts', 'Technology'];
+
+							let firstPreference = rand(49)+50;
+							let secondPreference = firstPreference - (rand(20)+1);
+							let thirdPreference = secondPreference - (rand(10)+1);
+
+							let firstMatch = rand(disciplines.length);
+							let secondMatch = firstMatch - (rand(4)+1);
+							let thirdMatch = secondMatch - (rand(5)+1);
+
+							let results = "According to your responses, you are most suited to " + "<span>" + disciplines[firstMatch] + " Law (" + firstPreference.toString() +  "% match)" + "</span>" + "!" + "<br>" + "The second-best match is " + "<span>" + disciplines[secondMatch] + " Law (" + secondPreference.toString() +  "% match)" + "</span>" + " and the third-best match is " + "<span>" + disciplines[thirdMatch] + " Law (" + thirdPreference.toString() +  "% match)" + "</span>" + "!";
+							
+							output.innerHTML = results;
+						}
+
+						function rand(maximum) {
+							return Math.floor(Math.random() * maximum);
+						}
+						</script>
+
+						<h3>Profile</h3>
+						<body onload="generateResults()">
+							<p id="output"></p>
+
+						<h3>What Next?</h3>
+						<p>Share your results with your employer so that you can find <b>your place	</b>.</p>
 					</div>
 				</section>
 
