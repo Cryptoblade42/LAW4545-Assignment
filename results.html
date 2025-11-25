@@ -48,7 +48,7 @@
 							let secondMatch = firstMatch - (rand(4)+1);
 							let thirdMatch = secondMatch - (rand(5)+1);
 
-							let results = "According to your responses, you are most suited to " + "<span>" + disciplines[firstMatch] + " Law (" + firstPreference.toString() +  "% match)" + "</span>" + "!" + "<br>" + "The second-best match is " + "<span>" + disciplines[secondMatch] + " Law (" + secondPreference.toString() +  "% match)" + "</span>" + " and the third-best match is " + "<span>" + disciplines[thirdMatch] + " Law (" + thirdPreference.toString() +  "% match)" + "</span>" + "!";
+							let results = "According to your responses, you are most suited to " + "<span>" + disciplines.at(firstMatch) + " Law (" + firstPreference.toString() +  "% match)" + "</span>" + "!" + "<br>" + "The second-best match is " + "<span>" + disciplines.at(secondMatch) + " Law (" + secondPreference.toString() +  "% match)" + "</span>" + " and the third-best match is " + "<span>" + disciplines.at(thirdMatch) + " Law (" + thirdPreference.toString() +  "% match)" + "</span>" + "!";
 							
 							output.innerHTML = results;
 						}
