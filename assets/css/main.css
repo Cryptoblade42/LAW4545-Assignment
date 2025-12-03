@@ -3900,3 +3900,40 @@
 span {
 	font-weight: bold;
 }
+
+.review {
+	width: 85%;
+	margin: 20px auto;
+	text-align: center;
+	border: 2px solid #000000e2;
+	padding: 16px;
+	border-radius: 5px;
+	background-color: #e9e8e8;
+}
+.review__items {
+	display: none;
+	margin: 5%;
+}
+
+
+.review__items h1 {
+	font-size: 18px;
+	text-align: left;
+}
+
+.review__items img {
+	width:100%;
+	padding-bottom: 2em;
+}
+
+.review__items p {
+	font-size: 14px;
+	text-align: right;
+	font-style: italic;
+	margin-bottom: -2%;
+	color:#444;
+}
+
+.review__dots {
+	text-align:center; 
+}
