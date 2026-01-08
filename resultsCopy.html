@@ -1,0 +1,293 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>The Sorting Hat</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <style>
+      .pill { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid rgba(255,255,255,0.25); }
+      .muted { opacity: 0.8; }
+      .loading { display:flex; gap:.75rem; align-items:center; }
+      .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.35); border-top-color: rgba(255,255,255,0.95); animation: spin 0.8s linear infinite;}
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .resultCard span { font-weight: 700; }
+    </style>
+
+    <!-- Configure your backend endpoint here -->
+    <script>
+      // Example: window.PREDICT_ENDPOINT = "/api/predict-stream";
+      // For Netlify functions: "/.netlify/functions/predict-stream"
+      window.PREDICT_ENDPOINT = "/api/predict-stream";
+    </script>
+  </head>
+
+  <body class="is-preload">
+    <div id="page-wrapper">
+
+      <header id="header">
+        <h1><a href="index.html">The Sorting Hat</a> by Tiddles 2</h1>
+        <nav id="nav">
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="team.html">Who We Are</a></li>
+            <li><a href="test.html" class="button">Take the Test</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <section id="main" class="container">
+        <header>
+          <h2>Your Results</h2>
+        </header>
+
+        <div class="box">
+          <span class="image featured"><img src="images/book.jpg" alt="" /></span>
+
+          <h3>Profile</h3>
+
+          <div id="status" class="loading">
+            <div class="spinner"></div>
+            <div class="muted">Analysing your responses…</div>
+          </div>
+
+          <div id="output" class="resultCard" style="margin-top: 1rem;"></div>
+
+          <h3 style="margin-top:1.5rem;">What Next?</h3>
+          <p>Share your results with your employer so that you can find <b>your place</b>.</p>
+        </div>
+      </section>
+
+      <footer id="footer">
+        <ul class="copyright">
+          <li>&copy; Team Tiddles 2. All rights reserved.</li>
+          <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+          <li>All image credits go to their respective creators from <a href="https://unsplash.com/">Unsplash</a></li>
+        </ul>
+      </footer>
+    </div>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.dropotron.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+
+    <script>
+      const STREAMS = [
+        "Corporate / Commercial",
+        "Litigation / Dispute resolution",
+        "Criminal",
+        "Family",
+        "Property / Real estate / Conveyancing",
+        "Employment / workplace",
+        "Personal injury",
+        "Immigration",
+        "Wills & estates (succession)",
+        "Intellectual property (IP)",
+        "Tax",
+        "Banking & finance",
+        "Regulatory / compliance / privacy",
+        "Environmental & planning",
+        "Human rights / public law",
+      ];
+
+      function softmax(xs) {
+        const max = Math.max(...xs);
+        const exps = xs.map(x => Math.exp(x - max));
+        const sum = exps.reduce((a,b)=>a+b,0);
+        return exps.map(e => e / sum);
+      }
+
+      function heuristicPredict(answers) {
+        const score = Object.fromEntries(STREAMS.map(s => [s, 0]));
+
+        // Radios
+        if (answers.q1 === "a_lot") {
+          score["Litigation / Dispute resolution"] += 3;
+          score["Criminal"] += 2;
+        } else if (answers.q1 === "a_little") {
+          score["Corporate / Commercial"] += 2;
+          score["Employment / workplace"] += 2;
+          score["Regulatory / compliance / privacy"] += 2;
+        } else if (answers.q1 === "not_at_all") {
+          score["Family"] += 3;
+          score["Wills & estates (succession)"] += 3;
+          score["Property / Real estate / Conveyancing"] += 2;
+          score["Immigration"] += 1;
+        }
+
+        if (answers.q2 === "team") {
+          score["Corporate / Commercial"] += 3;
+          score["Banking & finance"] += 3;
+          score["Employment / workplace"] += 2;
+          score["Environmental & planning"] += 1;
+        } else if (answers.q2 === "solo") {
+          score["Tax"] += 2;
+          score["Intellectual property (IP)"] += 2;
+          score["Regulatory / compliance / privacy"] += 2;
+          score["Immigration"] += 1;
+        } else if (answers.q2 === "either") {
+          score["Corporate / Commercial"] += 1;
+          score["Employment / workplace"] += 1;
+          score["Litigation / Dispute resolution"] += 1;
+        }
+
+        if (answers.q3 === "analytical") {
+          score["Tax"] += 3;
+          score["Regulatory / compliance / privacy"] += 2;
+          score["Banking & finance"] += 2;
+          score["Intellectual property (IP)"] += 2;
+          score["Property / Real estate / Conveyancing"] += 1;
+        } else if (answers.q3 === "creative") {
+          score["Intellectual property (IP)"] += 3;
+          score["Human rights / public law"] += 1;
+          score["Family"] += 1;
+          score["Corporate / Commercial"] += 1;
+        } else if (answers.q3 === "both") {
+          score["Corporate / Commercial"] += 2;
+          score["Employment / workplace"] += 2;
+          score["Environmental & planning"] += 2;
+          score["Litigation / Dispute resolution"] += 1;
+        }
+
+        if (answers.q4 === "spontaneous") {
+          score["Criminal"] += 3;
+          score["Litigation / Dispute resolution"] += 2;
+          score["Personal injury"] += 1;
+        } else if (answers.q4 === "reserved") {
+          score["Property / Real estate / Conveyancing"] += 3;
+          score["Tax"] += 2;
+          score["Wills & estates (succession)"] += 2;
+          score["Regulatory / compliance / privacy"] += 2;
+          score["Immigration"] += 2;
+        } else if (answers.q4 === "both") {
+          score["Corporate / Commercial"] += 2;
+          score["Employment / workplace"] += 2;
+          score["Environmental & planning"] += 2;
+          score["Personal injury"] += 1;
+        }
+
+        // Hogwarts “flavour” weight
+        if (answers.q5 === "gryffindor") {
+          score["Litigation / Dispute resolution"] += 1;
+          score["Criminal"] += 1;
+          score["Human rights / public law"] += 1;
+        } else if (answers.q5 === "slytherin") {
+          score["Corporate / Commercial"] += 1;
+          score["Banking & finance"] += 1;
+          score["Tax"] += 1;
+        } else if (answers.q5 === "ravenclaw") {
+          score["Intellectual property (IP)"] += 1;
+          score["Tax"] += 1;
+          score["Regulatory / compliance / privacy"] += 1;
+        } else if (answers.q5 === "hufflepuff") {
+          score["Family"] += 1;
+          score["Wills & estates (succession)"] += 1;
+          score["Personal injury"] += 1;
+          score["Immigration"] += 1;
+        }
+
+        // Free-text keyword nudges
+        const text = [answers.q6, answers.q7, answers.q8, answers.q9, answers.q10].join(" ").toLowerCase();
+
+        const bump = (stream, n) => score[stream] += n;
+
+        if (/(argu|persuas|debate|advoca|court|cross[-\s]?examin)/.test(text)) bump("Litigation / Dispute resolution", 2);
+        if (/(pressure|fast|high stakes|urgent|split[-\s]?second)/.test(text)) bump("Criminal", 2);
+        if (/(empath|care|support|de[-\s]?escalat|listen|boundar)/.test(text)) bump("Family", 2);
+        if (/(checklist|detail|process|organis|organis|milestone|conveyanc)/.test(text)) bump("Property / Real estate / Conveyancing", 2);
+        if (/(policy|investigat|workplace|fair|tact|gr(e|a)y)/.test(text)) bump("Employment / workplace", 2);
+        if (/(injur|medical|rehab|insur|compensation)/.test(text)) bump("Personal injury", 2);
+        if (/(visa|migration|immigra|forms|paperwork|citizenship)/.test(text)) bump("Immigration", 2);
+        if (/(will|estate|probate|inherit|succession)/.test(text)) bump("Wills & estates (succession)", 2);
+        if (/(ip|patent|trademark|copyright|innovation|tech|software|code)/.test(text)) bump("Intellectual property (IP)", 2);
+        if (/(tax|numbers|account|calculation|structur)/.test(text)) bump("Tax", 2);
+        if (/(finance|loan|bank|transaction|facility|deal)/.test(text)) bump("Banking & finance", 2);
+        if (/(privacy|data|compliance|regulat|risk|breach)/.test(text)) bump("Regulatory / compliance / privacy", 2);
+        if (/(environment|climate|planning|approval|council|science)/.test(text)) bump("Environmental & planning", 2);
+        if (/(rights|justice|public law|judicial review|constitution)/.test(text)) bump("Human rights / public law", 2);
+
+        // Convert to ranked percentages
+        const raw = STREAMS.map(s => score[s] || 0);
+        const probs = softmax(raw.map(x => x + 0.0001)); // avoid all-zero edge
+        const ranked = STREAMS
+          .map((s, i) => ({ stream: s, score: raw[i], percent: Math.round(probs[i] * 100) }))
+          .sort((a,b) => b.score - a.score);
+
+        return {
+          model: "heuristic-fallback",
+          ranked: ranked.slice(0, 3).map(r => ({
+            stream: r.stream,
+            percent: r.percent,
+            why: "Based on your multiple-choice selections and keyword signals in your written responses."
+          }))
+        };
+      }
+
+      async function aiPredict(answers) {
+        const endpoint = window.PREDICT_ENDPOINT;
+        if (!endpoint) throw new Error("No PREDICT_ENDPOINT configured");
+
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers, streams: STREAMS })
+        });
+
+        if (!res.ok) throw new Error("Prediction API failed: " + res.status);
+        const data = await res.json();
+
+        // Expect: { model: "...", ranked: [{stream, percent, why}, ...] }
+        if (!data || !Array.isArray(data.ranked)) throw new Error("Invalid API response");
+        return data;
+      }
+
+      function renderResults(data) {
+        const status = document.getElementById("status");
+        const output = document.getElementById("output");
+        status.style.display = "none";
+
+        const top = data.ranked.slice(0, 3);
+
+        output.innerHTML = `
+          <p class="muted">Model: <span class="pill">${(data.model || "unknown")}</span></p>
+          <p>According to your responses, you are most suited to
+            <span>${top[0].stream} (${top[0].percent}% match)</span>!</p>
+          <p>The second-best match is
+            <span>${top[1].stream} (${top[1].percent}% match)</span>
+            and the third-best match is
+            <span>${top[2].stream} (${top[2].percent}% match)</span>!</p>
+          <hr />
+          <p><b>Why:</b> ${top.map((t, i) => `<br>${i+1}. <span>${t.stream}</span>: ${t.why || ""}`).join("")}</p>
+        `;
+      }
+
+      (async function init() {
+        const saved = localStorage.getItem("sortingHatResponses");
+        const status = document.getElementById("status");
+        const output = document.getElementById("output");
+
+        if (!saved) {
+          status.style.display = "none";
+          output.innerHTML = `<p>Couldn't find your test submission. Please <a href="test.html">take the test</a> first.</p>`;
+          return;
+        }
+
+        const { answers } = JSON.parse(saved);
+
+        try {
+          const data = await aiPredict(answers);
+          renderResults(data);
+        } catch (err) {
+          // Fallback so your site still works on static hosting
+          const data = heuristicPredict(answers);
+          renderResults(data);
+        }
+      })();
+    </script>
+  </body>
+</html>
